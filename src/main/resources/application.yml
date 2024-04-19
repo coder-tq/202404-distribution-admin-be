@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: seller-admin
+---
+spring:
+  config:
+    activate:
+      on-profile:
+          - local
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/seller_admin?useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8
+    username: root
+    password: root
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 5
+      idle-timeout: 30000
+
+token:
+  signing:
+    key: 6642a33f8b548fd3721935b512dc257061e1e54ee462854c2dbd61c46ea00805
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - prod
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/seller_admin?useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8
+    username: root
+    password: xxxx
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 5
+      idle-timeout: 30000
+
+token:
+  signing:
+    key: 7092321ed789b617a639deb547f0a32ddf2393c74352caaf6c02f0673d20ea33
