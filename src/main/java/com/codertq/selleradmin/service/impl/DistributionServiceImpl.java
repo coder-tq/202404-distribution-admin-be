@@ -22,8 +22,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -46,8 +48,10 @@ public class DistributionServiceImpl implements DistributionService {
     public void exportAllDistributionDataToExcel(ZonedDateTime dateTime, HttpServletResponse response) {
         // Prepare the response
         response.setContentType("application/zip");
-        response.setHeader("Content-Disposition", "attachment; filename=distributions.zip");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE;
+        response.setHeader("Content-Disposition", "attachment; filename="+ DateTimeUtil.getLocalDateTime(dateTime).format(dateTimeFormatter) +".zip");
 
+        DecimalFormat format = new DecimalFormat("0.######");
         String tempDir = System.getProperty("java.io.tmpdir");
         List<File> files = new ArrayList<>();
 
@@ -60,33 +64,31 @@ public class DistributionServiceImpl implements DistributionService {
             throw new RuntimeException(e);
         }
         List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(dateTime);
+        Map<String, Integer> distributionNameCount = new HashMap<>();
         for (DistributionVO distributionVO : currentDistributionList) {
-            File tempFile = null;
-            try {
-                tempFile = File.createTempFile(distributionVO.getDistributorName(), ".xlsx", new File(tempDir));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            Integer count = distributionNameCount.get(distributionVO.getDistributorName());
+            String suffix = count == null ? "" : "_" + count;
+            distributionNameCount.put(distributionVO.getDistributorName(), count == null ? 1 : count + 1);
+            File tempFile = new File(tempDir, distributionVO.getDistributorName() + suffix + ".xlsx");
             files.add(tempFile);
             try (OutputStream out = new FileOutputStream(tempFile)) {
-                List<MergeCellWriteHandler.MergeCellConfig> mergeCellConfigs = new ArrayList<>();
-                mergeCellConfigs.add(MergeCellWriteHandler.MergeCellConfig.builder().startRowIndex(6).mergeColumnIndex(0).mergeColumnSize(2).build());
-                mergeCellConfigs.add(MergeCellWriteHandler.MergeCellConfig.builder().startRowIndex(6).mergeColumnIndex(3).mergeColumnSize(2).build());
-                ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(templateFile).registerWriteHandler(new MergeCellWriteHandler(mergeCellConfigs)).excelType(ExcelTypeEnum.XLSX).build();
+                ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(templateFile).registerWriteHandler(new MergeCellWriteHandler()).excelType(ExcelTypeEnum.XLSX).build();
                 List<ExportDistributionVO> list = new ArrayList<>();
+                Double totalPrice = 0.0;
                 for (DistributionDetailVO distributionDetailVO : distributionVO.getDistributionDetailList()) {
+                    if (Double.parseDouble(distributionDetailVO.getCount()) == 0) {
+                        continue;
+                    }
                     ExportDistributionVO exportDistributionVO = new ExportDistributionVO();
                     exportDistributionVO.setDistributionCategoryName(distributionDetailVO.getCategoryName());
-                    exportDistributionVO.setDistributionCategoryPrice(distributionDetailVO.getPrice());
-                    exportDistributionVO.setDistributionCount(distributionDetailVO.getCount());
-                    exportDistributionVO.setDistributionPrice(String.valueOf(Double.parseDouble(distributionDetailVO.getCount()) * Double.parseDouble(distributionDetailVO.getPrice())));
+                    exportDistributionVO.setDistributionCategoryPrice(format.format(Double.parseDouble(distributionDetailVO.getPrice())));
+                    exportDistributionVO.setDistributionCount(format.format(Double.parseDouble(distributionDetailVO.getCount())));
+                    Double price = Double.parseDouble(distributionDetailVO.getCount()) * Double.parseDouble(distributionDetailVO.getPrice());
+                    totalPrice += price;
+                    exportDistributionVO.setDistributionPrice(format.format(price));
                     list.add(exportDistributionVO);
                 }
                 WriteSheet writeSheet = EasyExcel.writerSheet().build();
-                // 这里注意 入参用了forceNewRow 代表在写入list的时候不管list下面有没有空行 都会创建一行，然后下面的数据往后移动。默认 是false，会直接使用下一行，如果没有则创建。
-                // forceNewRow 如果设置了true,有个缺点 就是他会把所有的数据都放到内存了，所以慎用
-                // 简单的说 如果你的模板有list,且list不是最后一行，下面还有数据需要填充 就必须设置 forceNewRow=true 但是这个就会把所有数据放到内存 会很耗内存
-                // 如果数据量大 list不是最后一行 参照下一个
                 FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
                 excelWriter.fill(list, fillConfig, writeSheet);
                 Map<String, Object> map = MapUtils.newHashMap();
@@ -95,7 +97,7 @@ public class DistributionServiceImpl implements DistributionService {
                 map.put("year", localDate.getYear());
                 map.put("month", localDate.getMonth().getValue());
                 map.put("day", localDate.getDayOfMonth());
-                map.put("totalPrice", 1000);
+                map.put("totalPrice", totalPrice);
                 excelWriter.fill(map, writeSheet);
                 excelWriter.finish();
             } catch (IOException e) {
