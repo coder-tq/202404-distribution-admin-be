@@ -1,15 +1,13 @@
 package com.codertq.selleradmin.config;
 
 import com.codertq.selleradmin.service.JwtService;
-import com.codertq.selleradmin.service.UserService;
-import io.jsonwebtoken.ExpiredJwtException;
+import com.codertq.selleradmin.mpservice.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
@@ -44,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
         try {
             userName = jwtService.extractUserName(jwt);
-        } catch (ExpiredJwtException e) {
+        } catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             return;
         }

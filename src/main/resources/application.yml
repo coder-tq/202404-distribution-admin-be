@@ -9,7 +9,7 @@ spring:
           - local
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/seller_admin?useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8
+    url: jdbc:mysql://localhost:3306/seller_admin?useSSL=false&serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8
     username: root
     password: root
     type: com.zaxxer.hikari.HikariDataSource
@@ -21,6 +21,29 @@ spring:
 token:
   signing:
     key: 6642a33f8b548fd3721935b512dc257061e1e54ee462854c2dbd61c46ea00805
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile:
+        - test
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/seller-test?useSSL=false&serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8
+    username: seller-test
+    password: pcGZp3AB5rxJeRtM
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 5
+      idle-timeout: 30000
+
+token:
+  signing:
+    key: 7092321ed789b617a639deb547f0a32ddf2393c74352caaf6c02f0673d20ea33
+
 ---
 spring:
   config:
@@ -29,9 +52,9 @@ spring:
         - prod
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/seller_admin?useSSL=false&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8
-    username: root
-    password: xxxx
+    url: jdbc:mysql://localhost:3306/seller-admin?useSSL=false&serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8
+    username: seller-admin
+    password: tKdRjX5KDzaSBeCi
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
       maximum-pool-size: 15

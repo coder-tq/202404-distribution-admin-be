@@ -1,4 +1,4 @@
-package com.codertq.selleradmin.service.impl;
+package com.codertq.selleradmin.mpservice.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.codertq.selleradmin.domain.dao.UserDAO;
@@ -6,10 +6,8 @@ import com.codertq.selleradmin.domain.dao.UserRoleDAO;
 import com.codertq.selleradmin.domain.pojo.User;
 import com.codertq.selleradmin.mapper.UserMapper;
 import com.codertq.selleradmin.mapper.UserRoleMapper;
-import com.codertq.selleradmin.service.UserService;
+import com.codertq.selleradmin.mpservice.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;

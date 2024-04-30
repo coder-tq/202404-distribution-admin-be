@@ -16,9 +16,17 @@ import org.springframework.web.context.request.WebRequest;
 @ControllerAdvice
 public class ControllerExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
+    public final ResponseEntity<Object> handleRuntimeExceptions(Exception ex, WebRequest request) {
+        log.error("Exception: ", ex);
+        Result<Object> result = Result.fail(-1, ex.getMessage(), ex);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+
+    @ExceptionHandler(Exception.class)
     public final ResponseEntity<Object> handleAllExceptions(Exception ex, WebRequest request) {
         log.error("Exception: ", ex);
         Result<Object> result = Result.fail(-1, ex.getMessage(), ex);
-        return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

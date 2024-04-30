@@ -1,4 +1,4 @@
-package com.codertq.selleradmin.service;
+package com.codertq.selleradmin.mpservice;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.codertq.selleradmin.domain.dao.UserRoleDAO;

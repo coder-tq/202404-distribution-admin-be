@@ -1,4 +1,4 @@
-package com.codertq.selleradmin.service;
+package com.codertq.selleradmin.mpservice;
 
 import com.codertq.selleradmin.domain.vo.request.SignInRequest;
 import com.codertq.selleradmin.domain.vo.request.SignUpRequest;

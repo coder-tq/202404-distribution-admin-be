@@ -1,7 +1,6 @@
-package com.codertq.selleradmin.service;
+package com.codertq.selleradmin.mpservice;
 
 import com.codertq.selleradmin.domain.pojo.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.Optional;

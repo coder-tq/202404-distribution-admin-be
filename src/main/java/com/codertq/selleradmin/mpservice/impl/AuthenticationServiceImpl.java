@@ -1,12 +1,12 @@
-package com.codertq.selleradmin.service.impl;
+package com.codertq.selleradmin.mpservice.impl;
 
 import com.codertq.selleradmin.domain.pojo.User;
 import com.codertq.selleradmin.domain.vo.request.SignInRequest;
 import com.codertq.selleradmin.domain.vo.request.SignUpRequest;
 import com.codertq.selleradmin.domain.vo.response.SignInResponse;
-import com.codertq.selleradmin.service.AuthenticationService;
+import com.codertq.selleradmin.mpservice.AuthenticationService;
 import com.codertq.selleradmin.service.JwtService;
-import com.codertq.selleradmin.service.UserService;
+import com.codertq.selleradmin.mpservice.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
