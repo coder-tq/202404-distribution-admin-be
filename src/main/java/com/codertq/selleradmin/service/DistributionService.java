@@ -28,5 +28,7 @@ public interface DistributionService {
 
     void exportAllDistributionDataToExcel(ZonedDateTime dateTime, HttpServletResponse response);
 
-    void exportDataToExcel(HttpServletResponse response);
+    void exportDataToExcel(ZonedDateTime dateTime, HttpServletResponse response);
+
+    void exportAllDistributionDataWithPriceToExcel(ZonedDateTime date, HttpServletResponse response);
 }

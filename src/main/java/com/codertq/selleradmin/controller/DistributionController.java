@@ -60,13 +60,21 @@ public class DistributionController {
 
     @GetMapping("/export")
     @Operation(summary = "导出分销数据")
-    public void exportDistributionData(HttpServletResponse response) {
-        distributionService.exportDataToExcel(response);
+    public void exportDistributionData(@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @RequestParam(value = "date", required = false) ZonedDateTime date, HttpServletResponse response) {
+        if (date == null) {
+            date = ZonedDateTime.now();
+        }
+        distributionService.exportDataToExcel(date, response);
     }
 
     @GetMapping("/exportAllByDate")
     @Operation(summary = "导出分销数据")
     public void exportAllDistributionData(@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @RequestParam("date") ZonedDateTime date, HttpServletResponse response) {
         distributionService.exportAllDistributionDataToExcel(date, response);
+    }
+    @GetMapping("/exportAllWithPriceByDate")
+    @Operation(summary = "导出分销数据")
+    public void exportAllDistributionDataWithPrice(@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @RequestParam("date") ZonedDateTime date, HttpServletResponse response) {
+        distributionService.exportAllDistributionDataWithPriceToExcel(date, response);
     }
 }

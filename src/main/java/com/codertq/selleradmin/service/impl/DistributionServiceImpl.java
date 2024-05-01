@@ -44,81 +44,9 @@ public class DistributionServiceImpl implements DistributionService {
     @Autowired
     private CategoryMPService categoryMPService;
 
-    @Override
-    public void exportAllDistributionDataToExcel(ZonedDateTime dateTime, HttpServletResponse response) {
-        // Prepare the response
-        response.setContentType("application/zip");
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE;
-        response.setHeader("Content-Disposition", "attachment; filename="+ DateTimeUtil.getLocalDateTime(dateTime).format(dateTimeFormatter) +".zip");
-
-        DecimalFormat format = new DecimalFormat("0.######");
-        String tempDir = System.getProperty("java.io.tmpdir");
-        List<File> files = new ArrayList<>();
-
-
-        ClassPathResource classPathResource = new ClassPathResource("templates/exportAllDistributionDataTemplate.xlsx");
-        File templateFile = null;
-        try {
-            templateFile = classPathResource.getFile();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(dateTime);
-        Map<String, Integer> distributionNameCount = new HashMap<>();
-        for (DistributionVO distributionVO : currentDistributionList) {
-            Integer count = distributionNameCount.get(distributionVO.getDistributorName());
-            String suffix = count == null ? "" : "_" + count;
-            distributionNameCount.put(distributionVO.getDistributorName(), count == null ? 1 : count + 1);
-            File tempFile = new File(tempDir, distributionVO.getDistributorName() + suffix + ".xlsx");
-            files.add(tempFile);
-            try (OutputStream out = new FileOutputStream(tempFile)) {
-                ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(templateFile).registerWriteHandler(new MergeCellWriteHandler()).excelType(ExcelTypeEnum.XLSX).build();
-                List<ExportDistributionVO> list = new ArrayList<>();
-                Double totalPrice = 0.0;
-                for (DistributionDetailVO distributionDetailVO : distributionVO.getDistributionDetailList()) {
-                    if (Double.parseDouble(distributionDetailVO.getCount()) == 0) {
-                        continue;
-                    }
-                    ExportDistributionVO exportDistributionVO = new ExportDistributionVO();
-                    exportDistributionVO.setDistributionCategoryName(distributionDetailVO.getCategoryName());
-                    exportDistributionVO.setDistributionCategoryPrice(format.format(Double.parseDouble(distributionDetailVO.getPrice())));
-                    exportDistributionVO.setDistributionCount(format.format(Double.parseDouble(distributionDetailVO.getCount())));
-                    Double price = Double.parseDouble(distributionDetailVO.getCount()) * Double.parseDouble(distributionDetailVO.getPrice());
-                    totalPrice += price;
-                    exportDistributionVO.setDistributionPrice(format.format(price));
-                    list.add(exportDistributionVO);
-                }
-                WriteSheet writeSheet = EasyExcel.writerSheet().build();
-                FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
-                excelWriter.fill(list, fillConfig, writeSheet);
-                Map<String, Object> map = MapUtils.newHashMap();
-                map.put("distributorName", "张三");
-                LocalDate localDate = DateTimeUtil.getLocalDate(dateTime);
-                map.put("year", localDate.getYear());
-                map.put("month", localDate.getMonth().getValue());
-                map.put("day", localDate.getDayOfMonth());
-                map.put("totalPrice", totalPrice);
-                excelWriter.fill(map, writeSheet);
-                excelWriter.finish();
-            } catch (IOException e) {
-                // Handle the exception
-            }
-        }
-        try (ZipOutputStream zipOut = new ZipOutputStream(response.getOutputStream())) {
-            for (File file : files) {
-                ZipEntry zipEntry = new ZipEntry(file.getName());
-                zipOut.putNextEntry(zipEntry);
-                Files.copy(file.toPath(), zipOut);
-                zipOut.closeEntry();
-                file.delete();  // Delete the temporary file
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Override
-    public void exportDataToExcel(HttpServletResponse response) {
+    public void exportDataToExcel(ZonedDateTime dateTime, HttpServletResponse response) {
         // Prepare the response
         response.setContentType("application/vnd.ms-excel");
         response.setHeader("Content-Disposition", "attachment; filename=distribution.xlsx");
@@ -179,6 +107,134 @@ public class DistributionServiceImpl implements DistributionService {
         } catch (IOException e) {
             // Handle the exception
         }
+    }
+
+    @Override
+    public void exportAllDistributionDataToExcel(ZonedDateTime dateTime, HttpServletResponse response) {
+        // Prepare the response
+        response.setContentType("application/zip");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE;
+        response.setHeader("Content-Disposition", "attachment; filename="+ DateTimeUtil.getLocalDateTime(dateTime).format(dateTimeFormatter) +".zip");
+
+        DecimalFormat format = new DecimalFormat("0.######");
+        String tempDir = System.getProperty("java.io.tmpdir");
+        List<File> files = new ArrayList<>();
+
+
+        ClassPathResource classPathResource = new ClassPathResource("templates/exportAllDistributionDataTemplate.xlsx");
+        List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(dateTime);
+        Map<String, Integer> distributionNameCount = new HashMap<>();
+        for (DistributionVO distributionVO : currentDistributionList) {
+            Integer count = distributionNameCount.get(distributionVO.getDistributorName());
+            String suffix = count == null ? "" : "_" + count;
+            distributionNameCount.put(distributionVO.getDistributorName(), count == null ? 1 : count + 1);
+            File tempFile = new File(tempDir, distributionVO.getDistributorName() + suffix + ".xlsx");
+            files.add(tempFile);
+            try (OutputStream out = new FileOutputStream(tempFile)) {
+                ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(classPathResource.getInputStream()).registerWriteHandler(new MergeCellWriteHandler()).excelType(ExcelTypeEnum.XLSX).build();
+                List<ExportDistributionVO> list = new ArrayList<>();
+                Double totalPrice = 0.0;
+                for (DistributionDetailVO distributionDetailVO : distributionVO.getDistributionDetailList()) {
+                    if (Double.parseDouble(distributionDetailVO.getCount()) == 0) {
+                        continue;
+                    }
+                    ExportDistributionVO exportDistributionVO = new ExportDistributionVO();
+                    exportDistributionVO.setDistributionCategoryName(distributionDetailVO.getCategoryName());
+                    exportDistributionVO.setDistributionCategoryPrice(format.format(Double.parseDouble(distributionDetailVO.getPrice())));
+                    exportDistributionVO.setDistributionCount(format.format(Double.parseDouble(distributionDetailVO.getCount())));
+                    Double price = Double.parseDouble(distributionDetailVO.getCount()) * Double.parseDouble(distributionDetailVO.getPrice());
+                    totalPrice += price;
+                    exportDistributionVO.setDistributionPrice(format.format(price));
+                    list.add(exportDistributionVO);
+                }
+                WriteSheet writeSheet = EasyExcel.writerSheet().build();
+                FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+                excelWriter.fill(list, fillConfig, writeSheet);
+                Map<String, Object> map = MapUtils.newHashMap();
+                map.put("distributorName", distributionVO.getDistributorName());
+                LocalDate localDate = DateTimeUtil.getLocalDate(dateTime);
+                map.put("year", localDate.getYear());
+                map.put("month", localDate.getMonth().getValue());
+                map.put("day", localDate.getDayOfMonth());
+                map.put("totalPrice", totalPrice);
+                excelWriter.fill(map, writeSheet);
+                excelWriter.finish();
+            } catch (IOException e) {
+                // Handle the exception
+            }
+        }
+        generateZipFile(response, files);
+    }
+
+    private void generateZipFile(HttpServletResponse response, List<File> files) {
+        try (ZipOutputStream zipOut = new ZipOutputStream(response.getOutputStream())) {
+            for (File file : files) {
+                ZipEntry zipEntry = new ZipEntry(file.getName());
+                zipOut.putNextEntry(zipEntry);
+                Files.copy(file.toPath(), zipOut);
+                zipOut.closeEntry();
+                file.delete();  // Delete the temporary file
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void exportAllDistributionDataWithPriceToExcel(ZonedDateTime dateTime, HttpServletResponse response) {
+        // Prepare the response
+        response.setContentType("application/zip");
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ISO_DATE;
+        response.setHeader("Content-Disposition", "attachment; filename="+ DateTimeUtil.getLocalDateTime(dateTime).format(dateTimeFormatter) +".zip");
+
+        DecimalFormat format = new DecimalFormat("0.######");
+        String tempDir = System.getProperty("java.io.tmpdir");
+        List<File> files = new ArrayList<>();
+
+
+        ClassPathResource classPathResource = new ClassPathResource("templates/exportAllDistributionDataWithPriceTemplate.xlsx");
+        List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(dateTime);
+        Map<String, Integer> distributionNameCount = new HashMap<>();
+        for (DistributionVO distributionVO : currentDistributionList) {
+            Integer count = distributionNameCount.get(distributionVO.getDistributorName());
+            String suffix = count == null ? "" : "_" + count;
+            distributionNameCount.put(distributionVO.getDistributorName(), count == null ? 1 : count + 1);
+            File tempFile = new File(tempDir, distributionVO.getDistributorName() + suffix + ".xlsx");
+            files.add(tempFile);
+            try (OutputStream out = new FileOutputStream(tempFile)) {
+                ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(classPathResource.getInputStream()).registerWriteHandler(new MergeCellWriteHandler()).excelType(ExcelTypeEnum.XLSX).build();
+                List<ExportDistributionVO> list = new ArrayList<>();
+                Double totalPrice = 0.0;
+                for (DistributionDetailVO distributionDetailVO : distributionVO.getDistributionDetailList()) {
+                    if (Double.parseDouble(distributionDetailVO.getCount()) == 0) {
+                        continue;
+                    }
+                    ExportDistributionVO exportDistributionVO = new ExportDistributionVO();
+                    exportDistributionVO.setDistributionCategoryName(distributionDetailVO.getCategoryName());
+                    exportDistributionVO.setDistributionCategoryPrice(format.format(Double.parseDouble(distributionDetailVO.getPrice())));
+                    exportDistributionVO.setDistributionCount(format.format(Double.parseDouble(distributionDetailVO.getCount())));
+                    Double price = Double.parseDouble(distributionDetailVO.getCount()) * Double.parseDouble(distributionDetailVO.getPrice());
+                    totalPrice += price;
+                    exportDistributionVO.setDistributionPrice(format.format(price));
+                    list.add(exportDistributionVO);
+                }
+                WriteSheet writeSheet = EasyExcel.writerSheet().build();
+                FillConfig fillConfig = FillConfig.builder().forceNewRow(Boolean.TRUE).build();
+                excelWriter.fill(list, fillConfig, writeSheet);
+                Map<String, Object> map = MapUtils.newHashMap();
+                map.put("distributorName", distributionVO.getDistributorName());
+                LocalDate localDate = DateTimeUtil.getLocalDate(dateTime);
+                map.put("year", localDate.getYear());
+                map.put("month", localDate.getMonth().getValue());
+                map.put("day", localDate.getDayOfMonth());
+                map.put("totalPrice", totalPrice);
+                excelWriter.fill(map, writeSheet);
+                excelWriter.finish();
+            } catch (IOException e) {
+                // Handle the exception
+            }
+        }
+        generateZipFile(response, files);
     }
 
     private static Map<String, Double> getTotalCount(List<CategoryVO> currentCategoryList, List<DistributionVO> currentDistributionList) {
