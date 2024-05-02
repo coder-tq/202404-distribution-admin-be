@@ -121,7 +121,7 @@ public class DistributionServiceImpl implements DistributionService {
         List<File> files = new ArrayList<>();
 
 
-        ClassPathResource classPathResource = new ClassPathResource("templates/exportAllDistributionDataTemplate.xlsx");
+        ClassPathResource classPathResource = new ClassPathResource("templates/配货的模板.xlsx");
         List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(dateTime);
         Map<String, Integer> distributionNameCount = new HashMap<>();
         for (DistributionVO distributionVO : currentDistributionList) {
@@ -133,7 +133,7 @@ public class DistributionServiceImpl implements DistributionService {
             try (OutputStream out = new FileOutputStream(tempFile)) {
                 ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(classPathResource.getInputStream()).registerWriteHandler(new MergeCellWriteHandler()).excelType(ExcelTypeEnum.XLSX).build();
                 List<ExportDistributionVO> list = new ArrayList<>();
-                Double totalPrice = 0.0;
+                Double totalCount = 0.0;
                 for (DistributionDetailVO distributionDetailVO : distributionVO.getDistributionDetailList()) {
                     if (Double.parseDouble(distributionDetailVO.getCount()) == 0) {
                         continue;
@@ -143,7 +143,7 @@ public class DistributionServiceImpl implements DistributionService {
                     exportDistributionVO.setDistributionCategoryPrice(format.format(Double.parseDouble(distributionDetailVO.getPrice())));
                     exportDistributionVO.setDistributionCount(format.format(Double.parseDouble(distributionDetailVO.getCount())));
                     Double price = Double.parseDouble(distributionDetailVO.getCount()) * Double.parseDouble(distributionDetailVO.getPrice());
-                    totalPrice += price;
+                    totalCount += Double.parseDouble(distributionDetailVO.getCount());
                     exportDistributionVO.setDistributionPrice(format.format(price));
                     list.add(exportDistributionVO);
                 }
@@ -156,7 +156,7 @@ public class DistributionServiceImpl implements DistributionService {
                 map.put("year", localDate.getYear());
                 map.put("month", localDate.getMonth().getValue());
                 map.put("day", localDate.getDayOfMonth());
-                map.put("totalPrice", totalPrice);
+                map.put("totalCount", totalCount);
                 excelWriter.fill(map, writeSheet);
                 excelWriter.finish();
             } catch (IOException e) {
@@ -192,7 +192,7 @@ public class DistributionServiceImpl implements DistributionService {
         List<File> files = new ArrayList<>();
 
 
-        ClassPathResource classPathResource = new ClassPathResource("templates/exportAllDistributionDataWithPriceTemplate.xlsx");
+        ClassPathResource classPathResource = new ClassPathResource("templates/带价格的模板.xlsx");
         List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(dateTime);
         Map<String, Integer> distributionNameCount = new HashMap<>();
         for (DistributionVO distributionVO : currentDistributionList) {
