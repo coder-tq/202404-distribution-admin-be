@@ -26,5 +26,6 @@ public class CategoryDAO {
     private Long id;
     private String name;
     private String code;
+    private Integer sortBy;
     private Double price;
 }

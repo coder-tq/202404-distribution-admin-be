@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -167,6 +168,7 @@ public class DistributionMPServiceImpl extends ServiceImpl<DistributionMapper, D
     }
 
     private List<DistributionDetailVO> buildDistributionDetailVOList(List<DistributionDetailDAO> distributionDetailDAOList) {
+        DecimalFormat df = new DecimalFormat("#.##");
         return distributionDetailDAOList.stream().map((distributionDetailDAO) -> {
             QueryWrapper<CategoryDAO> categoryDAOQueryWrapper = new QueryWrapper<>();
             categoryDAOQueryWrapper.eq("id", distributionDetailDAO.getCategoryId());
@@ -176,8 +178,8 @@ public class DistributionMPServiceImpl extends ServiceImpl<DistributionMapper, D
                     .categoryId(distributionDetailDAO.getCategoryId().toString())
                     .categoryName(categoryDAO.getName())
                     .categoryCode(categoryDAO.getCode())
-                    .count(distributionDetailDAO.getCount().toString())
-                    .price(distributionDetailDAO.getPrice().toString())
+                    .count(df.format(distributionDetailDAO.getCount()))
+                    .price(df.format(distributionDetailDAO.getPrice()))
                     .build();
         }).toList();
     }

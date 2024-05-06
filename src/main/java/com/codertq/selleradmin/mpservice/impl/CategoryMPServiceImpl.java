@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Date;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -48,8 +49,10 @@ public class CategoryMPServiceImpl extends ServiceImpl<CategoryMapper, CategoryD
     private DistributionMapper distributionMapper;
     @Override
     public List<CategoryVO> getCurrentCategoryList(ZonedDateTime date) {
+        DecimalFormat df = new DecimalFormat("#.##");
         LocalDate localDate = DateTimeUtil.getLocalDate(date);
         QueryWrapper<CategoryDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByAsc("sort_by");
         List<CategoryDAO> categoryDAOS = categoryMapper.selectList(queryWrapper);
         QueryWrapper<CategoryDetailDAO> categoryDetailDAOQueryWrapper = new QueryWrapper<>();
         categoryDetailDAOQueryWrapper.in("category_id", categoryDAOS.stream().map(CategoryDAO::getId).toList());
@@ -86,9 +89,9 @@ public class CategoryMPServiceImpl extends ServiceImpl<CategoryMapper, CategoryD
                     .id(String.valueOf(categoryDAO.getId()))
                     .code(categoryDAO.getCode())
                     .name(categoryDAO.getName())
-                    .price(String.valueOf(categoryDetailDAO.getPrice()))
-                    .inventory(String.valueOf(categoryDetailDAO.getInventory()))
-                    .totalInventory(String.valueOf(totalInventory))
+                    .price(df.format(categoryDetailDAO.getPrice()))
+                    .inventory(df.format(categoryDetailDAO.getInventory()))
+                    .totalInventory(df.format(totalInventory))
                     .build();
         }).toList();
     }
