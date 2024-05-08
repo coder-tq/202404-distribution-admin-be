@@ -53,16 +53,11 @@ public class DistributionServiceImpl implements DistributionService {
 
         try (OutputStream outputStream = response.getOutputStream()) {
             ExcelWriter excelWriter = EasyExcel.write(outputStream).excelType(ExcelTypeEnum.XLSX).build();
-
             List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(ZonedDateTime.now());
-
-
             Map<String, List<DistributionVO>> collect = currentDistributionList.stream().collect(HashMap::new, (map, distributionVO) -> map.computeIfAbsent(distributionVO.getDistributionType(), k -> new ArrayList<>()).add(distributionVO), HashMap::putAll);
-            ;
             for (Map.Entry<String, List<DistributionVO>> entry : collect.entrySet()) {
 
                 List<CategoryVO> currentCategoryList = categoryMPService.getCurrentCategoryList(ZonedDateTime.now());
-                Set<String> removedCategory = new HashSet<>();
                 Map<String, Double> totalCount = getTotalCount(currentCategoryList, entry.getValue());
                 Map<String, Double> finalTotalCount = totalCount;
                 currentCategoryList = currentCategoryList.stream().filter(categoryVO -> finalTotalCount.get(categoryVO.getCode()) != 0).collect(Collectors.toList());
@@ -103,6 +98,23 @@ public class DistributionServiceImpl implements DistributionService {
                 WriteSheet writeSheet = EasyExcel.writerSheet(entry.getKey()).build();
                 excelWriter.write(data, writeSheet);
             }
+
+            List<CategoryVO> currentCategoryList = categoryMPService.getCurrentCategoryList(ZonedDateTime.now());
+            Map<String, Double> totalCount = getTotalCount(currentCategoryList, currentDistributionList);
+
+            List<String> categoryRow = new ArrayList<>();
+            categoryRow.add("");
+            List<String> sum = new ArrayList<>();
+            sum.add("合计");
+            for (CategoryVO categoryVO : currentCategoryList) {
+                categoryRow.add(categoryVO.getName());
+                sum.add(String.valueOf(totalCount.get(categoryVO.getCode())));
+            }
+            WriteSheet writeSheet = EasyExcel.writerSheet("总计").build();
+            List<List<String>> data = new ArrayList<>();
+            data.add(categoryRow);
+            data.add(sum);
+            excelWriter.write(data, writeSheet);
             excelWriter.finish();
         } catch (IOException e) {
             // Handle the exception
