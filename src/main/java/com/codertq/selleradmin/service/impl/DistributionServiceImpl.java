@@ -16,6 +16,8 @@ import com.codertq.selleradmin.utils.DateTimeUtil;
 import com.codertq.selleradmin.utils.excel.MergeCellWriteHandler;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -51,17 +53,25 @@ public class DistributionServiceImpl implements DistributionService {
         response.setContentType("application/vnd.ms-excel");
         response.setHeader("Content-Disposition", "attachment; filename=distribution.xlsx");
 
+        DecimalFormat df = new DecimalFormat("0.######");
+
+        List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(ZonedDateTime.now());
+
+        List<List<String>> totalData = new ArrayList<>();
+        List<CategoryVO> categoryList = categoryMPService.getCurrentCategoryList(ZonedDateTime.now());
+        Map<String, Double> totalCount = getTotalCount(categoryList, currentDistributionList);
+        categoryList = categoryList.stream().filter(categoryVO -> totalCount.get(categoryVO.getCode()) != 0).collect(Collectors.toList());
+
         try (OutputStream outputStream = response.getOutputStream()) {
             ExcelWriter excelWriter = EasyExcel.write(outputStream).excelType(ExcelTypeEnum.XLSX).build();
-            List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(ZonedDateTime.now());
             Map<String, List<DistributionVO>> collect = currentDistributionList.stream().collect(HashMap::new, (map, distributionVO) -> map.computeIfAbsent(distributionVO.getDistributionType(), k -> new ArrayList<>()).add(distributionVO), HashMap::putAll);
             for (Map.Entry<String, List<DistributionVO>> entry : collect.entrySet()) {
 
                 List<CategoryVO> currentCategoryList = categoryMPService.getCurrentCategoryList(ZonedDateTime.now());
-                Map<String, Double> totalCount = getTotalCount(currentCategoryList, entry.getValue());
-                Map<String, Double> finalTotalCount = totalCount;
+                Map<String, Double> currentCategorytotalCount = getTotalCount(currentCategoryList, entry.getValue());
+                Map<String, Double> finalTotalCount = currentCategorytotalCount;
                 currentCategoryList = currentCategoryList.stream().filter(categoryVO -> finalTotalCount.get(categoryVO.getCode()) != 0).collect(Collectors.toList());
-                totalCount = getTotalCount(currentCategoryList, entry.getValue());
+                currentCategorytotalCount = getTotalCount(currentCategoryList, entry.getValue());
 
                 List<List<String>> data = new ArrayList<>();
                 for (DistributionVO distributionVO : entry.getValue()) {
@@ -85,41 +95,54 @@ public class DistributionServiceImpl implements DistributionService {
                     data.add(new ArrayList<>());
                 }
 
-                List<String> categoryRow = new ArrayList<>();
-                categoryRow.add("");
-                List<String> sum = new ArrayList<>();
-                sum.add("合计");
-                for (CategoryVO categoryVO : currentCategoryList) {
-                    categoryRow.add(categoryVO.getName());
-                    sum.add(String.valueOf(totalCount.get(categoryVO.getCode())));
-                }
-                data.add(categoryRow);
-                data.add(sum);
+                data.addAll(getTotalData(df, "合计", currentCategoryList, currentCategorytotalCount));
+                totalData.addAll(getTotalData(df, entry.getKey(), categoryList, currentCategorytotalCount, true));
                 WriteSheet writeSheet = EasyExcel.writerSheet(entry.getKey()).build();
                 excelWriter.write(data, writeSheet);
             }
 
-            List<CategoryVO> currentCategoryList = categoryMPService.getCurrentCategoryList(ZonedDateTime.now());
-            Map<String, Double> totalCount = getTotalCount(currentCategoryList, currentDistributionList);
-
-            List<String> categoryRow = new ArrayList<>();
-            categoryRow.add("");
-            List<String> sum = new ArrayList<>();
-            sum.add("合计");
-            for (CategoryVO categoryVO : currentCategoryList) {
-                categoryRow.add(categoryVO.getName());
-                sum.add(String.valueOf(totalCount.get(categoryVO.getCode())));
-            }
+            totalData.addAll(getTotalData(df, "合计", categoryList, totalCount, true));
             WriteSheet writeSheet = EasyExcel.writerSheet("总计").build();
-            List<List<String>> data = new ArrayList<>();
-            data.add(categoryRow);
-            data.add(sum);
-            excelWriter.write(data, writeSheet);
+            excelWriter.write(transpose(totalData), writeSheet);
             excelWriter.finish();
         } catch (IOException e) {
             // Handle the exception
         }
     }
+
+    private List<List<String>> getTotalData(DecimalFormat df, String title, List<CategoryVO> categoryList, Map<String, Double> totalCount, Boolean hasTotal) {
+        List<List<String>> data = new ArrayList<>();
+        List<String> categoryRow = new ArrayList<>();
+        categoryRow.add("");
+        List<String> sum = new ArrayList<>();
+        sum.add(title);
+        double total = 0;
+        for (CategoryVO categoryVO : categoryList) {
+            categoryRow.add(categoryVO.getName());
+            if (!totalCount.containsKey(categoryVO.getCode()) || totalCount.get(categoryVO.getCode()) == 0) {
+                sum.add("");
+            } else {
+                sum.add(df.format(totalCount.get(categoryVO.getCode())));
+                total += totalCount.get(categoryVO.getCode());
+            }
+        }
+        if (hasTotal) {
+            categoryRow.add("");
+            sum.add("");
+
+            categoryRow.add("总量");
+            sum.add(df.format(total));
+        }
+        data.add(categoryRow);
+        data.add(sum);
+        data.add(new ArrayList<>());
+        return data;
+    }
+
+    private List<List<String>> getTotalData(DecimalFormat df, String title, List<CategoryVO> categoryList, Map<String, Double> totalCount) {
+        return getTotalData(df, title, categoryList, totalCount, false);
+    }
+
 
     @Override
     public void exportAllDistributionDataToExcel(ZonedDateTime dateTime, HttpServletResponse response) {
@@ -263,6 +286,27 @@ public class DistributionServiceImpl implements DistributionService {
             totalCount.put(categoryVO.getCode(), sum);
         }
         return totalCount;
+    }
+
+    // 矩阵转置,行列不一定等长, 每行不一定等长，缺失数据的值用空字符串代替
+    private static List<List<String>> transpose(List<List<String>> data) {
+        List<List<String>> result = new ArrayList<>();
+        int maxRow = 0;
+        for (List<String> row : data) {
+            maxRow = Math.max(maxRow, row.size());
+        }
+        for (int i = 0; i < maxRow; i++) {
+            List<String> newRow = new ArrayList<>();
+            for (List<String> row : data) {
+                if (i < row.size()) {
+                    newRow.add(row.get(i));
+                } else {
+                    newRow.add("");
+                }
+            }
+            result.add(newRow);
+        }
+        return result;
     }
 
     @Data

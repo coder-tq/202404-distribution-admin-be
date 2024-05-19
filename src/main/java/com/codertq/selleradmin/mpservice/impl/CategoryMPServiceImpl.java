@@ -89,6 +89,7 @@ public class CategoryMPServiceImpl extends ServiceImpl<CategoryMapper, CategoryD
                     .id(String.valueOf(categoryDAO.getId()))
                     .code(categoryDAO.getCode())
                     .name(categoryDAO.getName())
+                    .sortBy(categoryDAO.getSortBy())
                     .price(df.format(categoryDetailDAO.getPrice()))
                     .inventory(df.format(categoryDetailDAO.getInventory()))
                     .totalInventory(df.format(totalInventory))

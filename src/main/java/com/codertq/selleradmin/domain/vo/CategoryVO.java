@@ -14,6 +14,7 @@ public class CategoryVO {
     private String name;
     private String code;
     private String price;
+    private Integer sortBy;
     private String inventory;
     private String totalInventory;
 }

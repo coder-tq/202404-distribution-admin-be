@@ -33,5 +33,6 @@ public class DistributionDAO {
     private String distributionType;
     private String distributorPhone;
     private Date date;
+    private Integer sortBy;
     private Integer whetherDelete;
 }

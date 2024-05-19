@@ -2,9 +2,11 @@ package com.codertq.selleradmin.controller;
 
 import com.codertq.selleradmin.domain.pojo.Result;
 import com.codertq.selleradmin.domain.vo.CategoryVO;
+import com.codertq.selleradmin.domain.vo.request.CreateCategoryRequest;
 import com.codertq.selleradmin.domain.vo.request.UpdateCategoryListRequest;
 import com.codertq.selleradmin.domain.vo.request.UpdateCategoryRequest;
 import com.codertq.selleradmin.mpservice.CategoryMPService;
+import com.codertq.selleradmin.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,8 @@ import java.util.List;
 public class CategoryController {
     @Autowired
     private CategoryMPService categoryMPService;
+    @Autowired
+    private CategoryService categoryService;
 
     @GetMapping
     @Operation(summary = "根据时间戳查询当天分类信息")
@@ -42,5 +46,11 @@ public class CategoryController {
     @Operation(summary = "根据时间更新分类信息")
     public Result<Boolean> updateCategory(@RequestBody UpdateCategoryRequest request) {
         return Result.success(categoryMPService.updateCategory(request));
+    }
+
+    @PostMapping("/createCategory")
+    @Operation(summary = "根据时间更新分类信息")
+    public Result<Boolean> createCategory(@RequestBody CreateCategoryRequest request) {
+        return Result.success(categoryService.createCategory(request));
     }
 }

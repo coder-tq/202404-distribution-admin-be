@@ -17,6 +17,7 @@ public class UpsertDistributionDataRequest {
     private String distributorName;
     private String distributionType;
     private String distributorPhone;
+    private Integer distributorSortBy;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private Date date;
     private List<DistributionDetailVO> distributionDetailList;

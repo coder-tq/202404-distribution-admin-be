@@ -1,6 +1,5 @@
 package com.codertq.selleradmin.domain.vo;
 
-import com.codertq.selleradmin.domain.dao.DistributionDetailDAO;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,5 +16,6 @@ public class DistributionVO {
     private String distributorName;
     private String distributionType;
     private String distributorPhone;
+    private Integer distributorSortBy;
     private List<DistributionDetailVO> distributionDetailList;
 }

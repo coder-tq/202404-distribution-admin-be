@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -86,6 +87,7 @@ public class DistributionMPServiceImpl extends ServiceImpl<DistributionMapper, D
                 .distributionType(request.getDistributionType())
                 .distributorPhone(request.getDistributorPhone())
                 .date(request.getDate())
+                .sortBy(request.getDistributorSortBy())
                 .whetherDelete(WhetherDeleteEnum.NOT_DELETED.getCode())
                 .build();
         distributionMapper.insert(distribution);
@@ -126,6 +128,7 @@ public class DistributionMPServiceImpl extends ServiceImpl<DistributionMapper, D
             .distributionType(request.getDistributionType())
             .distributorPhone(request.getDistributorPhone())
             .date(request.getDate())
+            .sortBy(request.getDistributorSortBy())
             .whetherDelete(WhetherDeleteEnum.NOT_DELETED.getCode())
             .build();
         distributionMapper.insert(distribution);
@@ -162,9 +165,10 @@ public class DistributionMPServiceImpl extends ServiceImpl<DistributionMapper, D
                     .distributorName(distributionDAO.getDistributorName())
                     .distributionType(distributionDAO.getDistributionType())
                     .distributorPhone(distributionDAO.getDistributorPhone())
+                    .distributorSortBy(distributionDAO.getSortBy())
                     .distributionDetailList(buildDistributionDetailVOList(distributionDetailDAOList))
                     .build();
-        }).toList();
+        }).sorted(Comparator.comparingInt(DistributionVO::getDistributorSortBy)).toList();
     }
 
     private List<DistributionDetailVO> buildDistributionDetailVOList(List<DistributionDetailDAO> distributionDetailDAOList) {
