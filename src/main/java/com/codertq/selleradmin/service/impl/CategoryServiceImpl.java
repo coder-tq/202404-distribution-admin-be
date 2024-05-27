@@ -3,6 +3,7 @@ package com.codertq.selleradmin.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.codertq.selleradmin.domain.dao.CategoryDAO;
+import com.codertq.selleradmin.domain.enumeration.CategoryStatusEnum;
 import com.codertq.selleradmin.domain.vo.request.CreateCategoryRequest;
 import com.codertq.selleradmin.mpservice.CategoryMPService;
 import com.codertq.selleradmin.service.CategoryService;
@@ -28,6 +29,11 @@ public class CategoryServiceImpl implements CategoryService {
         categoryDAO.setCode(request.getCode());
         categoryDAO.setSortBy(request.getSortBy());
         return categoryMPService.save(categoryDAO);
+    }
+
+    @Override
+    public Boolean deleteCategory(String id) {
+        return categoryMPService.updateCategoryStatusById(id, CategoryStatusEnum.DELETED);
     }
 
     private void checkCreateCategoryRequest(CreateCategoryRequest request) {

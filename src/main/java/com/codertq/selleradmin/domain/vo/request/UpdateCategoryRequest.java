@@ -1,5 +1,6 @@
 package com.codertq.selleradmin.domain.vo.request;
 
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -17,4 +18,5 @@ public class UpdateCategoryRequest {
     private String categoryId;
     private String price;
     private String inventory;
+    private Integer sortBy;
 }

@@ -44,7 +44,6 @@ public class DistributionMPServiceImpl extends ServiceImpl<DistributionMapper, D
         QueryWrapper<DistributionDAO> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("date", DateTimeUtil.getLocalDate(date));
         queryWrapper.eq("whether_delete", WhetherDeleteEnum.NOT_DELETED.getCode());
-        queryWrapper.orderBy(true, true, "distributor_name");
         List<DistributionDAO> list = this.list(queryWrapper);
         return buildDistributionVOList(list);
     }
@@ -155,28 +154,35 @@ public class DistributionMPServiceImpl extends ServiceImpl<DistributionMapper, D
         return true;
     }
 
-    private List<DistributionVO> buildDistributionVOList(List<DistributionDAO> list) {
-        return list.stream().map((distributionDAO) -> {
-            QueryWrapper<DistributionDetailDAO> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("distribution_info_id", distributionDAO.getId());
-            List<DistributionDetailDAO> distributionDetailDAOList = distributionDetailService.list(queryWrapper);
+    /**
+     * 构造分销数据VO
+     */
+    private List<DistributionVO> buildDistributionVOList(List<DistributionDAO> distributionDAOList) {
+        QueryWrapper<DistributionDetailDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.in("distribution_info_id", distributionDAOList.stream().map(DistributionDAO::getId).toList());
+        List<DistributionDetailDAO> distributionDetailDAOList = distributionDetailService.list(queryWrapper);
+
+        return distributionDAOList.stream().map((distributionDAO) -> {
             return DistributionVO.builder()
                     .id(distributionDAO.getId().toString())
                     .distributorName(distributionDAO.getDistributorName())
                     .distributionType(distributionDAO.getDistributionType())
                     .distributorPhone(distributionDAO.getDistributorPhone())
                     .distributorSortBy(distributionDAO.getSortBy())
-                    .distributionDetailList(buildDistributionDetailVOList(distributionDetailDAOList))
+                    .distributionDetailList(buildDistributionDetailVOList(distributionDetailDAOList.stream()
+                            .filter(detail -> detail.getDistributionInfoId().equals(distributionDAO.getId())).toList()))
                     .build();
         }).sorted(Comparator.comparingInt(DistributionVO::getDistributorSortBy)).toList();
     }
 
     private List<DistributionDetailVO> buildDistributionDetailVOList(List<DistributionDetailDAO> distributionDetailDAOList) {
         DecimalFormat df = new DecimalFormat("#.##");
+        QueryWrapper<CategoryDAO> categoryDAOQueryWrapper = new QueryWrapper<>();
+        categoryDAOQueryWrapper.in("id", distributionDetailDAOList.stream().map(DistributionDetailDAO::getCategoryId).toList());
+        List<CategoryDAO> categoryDAOList = categoryMPService.list(categoryDAOQueryWrapper);
         return distributionDetailDAOList.stream().map((distributionDetailDAO) -> {
-            QueryWrapper<CategoryDAO> categoryDAOQueryWrapper = new QueryWrapper<>();
-            categoryDAOQueryWrapper.eq("id", distributionDetailDAO.getCategoryId());
-            CategoryDAO categoryDAO = categoryMPService.getOne(categoryDAOQueryWrapper);
+            CategoryDAO categoryDAO = categoryDAOList.stream()
+                    .filter(category -> category.getId().equals(distributionDetailDAO.getCategoryId())).findFirst().orElse(new CategoryDAO());
             return DistributionDetailVO.builder()
                     .id(distributionDetailDAO.getId().toString())
                     .categoryId(distributionDetailDAO.getCategoryId().toString())

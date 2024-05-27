@@ -8,4 +8,6 @@ import com.codertq.selleradmin.domain.vo.request.CreateCategoryRequest;
  */
 public interface CategoryService {
     Boolean createCategory(CreateCategoryRequest request);
+
+    Boolean deleteCategory(String id);
 }

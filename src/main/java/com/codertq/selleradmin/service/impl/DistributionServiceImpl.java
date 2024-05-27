@@ -78,7 +78,7 @@ public class DistributionServiceImpl implements DistributionService {
                     List<String> header = new ArrayList<>();
                     List<String> count = new ArrayList<>();
                     header.add("买家\\品类名称");
-                    count.add(distributionVO.getDistributorName());
+                    count.add(String.format("%s_%s", distributionVO.getDistributorSortBy(), distributionVO.getDistributorName()));
                     for (CategoryVO categoryVO : currentCategoryList) {
                         for (DistributionDetailVO distributionDetailVO : distributionVO.getDistributionDetailList()) {
                             if (distributionDetailVO.getCategoryId().equals(categoryVO.getId())) {
@@ -160,10 +160,7 @@ public class DistributionServiceImpl implements DistributionService {
         List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(dateTime);
         Map<String, Integer> distributionNameCount = new HashMap<>();
         for (DistributionVO distributionVO : currentDistributionList) {
-            Integer count = distributionNameCount.get(distributionVO.getDistributorName());
-            String suffix = count == null ? "" : "_" + count;
-            distributionNameCount.put(distributionVO.getDistributorName(), count == null ? 1 : count + 1);
-            File tempFile = new File(tempDir, distributionVO.getDistributorName() + suffix + ".xlsx");
+            File tempFile = getFile(distributionVO, distributionNameCount, tempDir);
             files.add(tempFile);
             try (OutputStream out = new FileOutputStream(tempFile)) {
                 ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(classPathResource.getInputStream()).registerWriteHandler(new MergeCellWriteHandler()).excelType(ExcelTypeEnum.XLSX).build();
@@ -231,10 +228,7 @@ public class DistributionServiceImpl implements DistributionService {
         List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(dateTime);
         Map<String, Integer> distributionNameCount = new HashMap<>();
         for (DistributionVO distributionVO : currentDistributionList) {
-            Integer count = distributionNameCount.get(distributionVO.getDistributorName());
-            String suffix = count == null ? "" : "_" + count;
-            distributionNameCount.put(distributionVO.getDistributorName(), count == null ? 1 : count + 1);
-            File tempFile = new File(tempDir, distributionVO.getDistributorName() + suffix + ".xlsx");
+            File tempFile = getFile(distributionVO, distributionNameCount, tempDir);
             files.add(tempFile);
             try (OutputStream out = new FileOutputStream(tempFile)) {
                 ExcelWriter excelWriter = EasyExcel.write(out).withTemplate(classPathResource.getInputStream()).registerWriteHandler(new MergeCellWriteHandler()).excelType(ExcelTypeEnum.XLSX).build();
@@ -270,6 +264,13 @@ public class DistributionServiceImpl implements DistributionService {
             }
         }
         generateZipFile(response, files);
+    }
+
+    private static File getFile(DistributionVO distributionVO, Map<String, Integer> distributionNameCount, String tempDir) {
+        Integer count = distributionNameCount.get(distributionVO.getDistributorName());
+        String suffix = count == null ? "" : "_" + count;
+        distributionNameCount.put(distributionVO.getDistributorName(), count == null ? 1 : count + 1);
+        return new File(tempDir, String.format("%s_%s%s.xlsx", distributionVO.getDistributorSortBy(), distributionVO.getDistributorName(), suffix));
     }
 
     private static Map<String, Double> getTotalCount(List<CategoryVO> currentCategoryList, List<DistributionVO> currentDistributionList) {

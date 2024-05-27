@@ -49,8 +49,14 @@ public class CategoryController {
     }
 
     @PostMapping("/createCategory")
-    @Operation(summary = "根据时间更新分类信息")
+    @Operation(summary = "创建分类信息")
     public Result<Boolean> createCategory(@RequestBody CreateCategoryRequest request) {
         return Result.success(categoryService.createCategory(request));
+    }
+
+    @PostMapping("/deleteCategory")
+    @Operation(summary = "删除分类信息")
+    public Result<Boolean> deleteCategory(@RequestParam("id") String id) {
+        return Result.success(categoryService.deleteCategory(id));
     }
 }

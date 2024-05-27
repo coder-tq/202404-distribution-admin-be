@@ -1,12 +1,15 @@
 package com.codertq.selleradmin.mpservice.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.codertq.selleradmin.domain.dao.CategoryDAO;
 import com.codertq.selleradmin.domain.dao.CategoryDetailDAO;
 import com.codertq.selleradmin.domain.dao.DistributionDAO;
 import com.codertq.selleradmin.domain.dao.DistributionDetailDAO;
+import com.codertq.selleradmin.domain.enumeration.CategoryStatusEnum;
 import com.codertq.selleradmin.domain.enumeration.WhetherDeleteEnum;
 import com.codertq.selleradmin.domain.vo.CategoryVO;
 import com.codertq.selleradmin.domain.vo.request.UpdateCategoryListRequest;
@@ -52,6 +55,7 @@ public class CategoryMPServiceImpl extends ServiceImpl<CategoryMapper, CategoryD
         DecimalFormat df = new DecimalFormat("#.##");
         LocalDate localDate = DateTimeUtil.getLocalDate(date);
         QueryWrapper<CategoryDAO> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("status", CategoryStatusEnum.ENABLED.getCode());
         queryWrapper.orderByAsc("sort_by");
         List<CategoryDAO> categoryDAOS = categoryMapper.selectList(queryWrapper);
         QueryWrapper<CategoryDetailDAO> categoryDetailDAOQueryWrapper = new QueryWrapper<>();
@@ -118,6 +122,10 @@ public class CategoryMPServiceImpl extends ServiceImpl<CategoryMapper, CategoryD
     @Override
     @Transactional
     public Boolean updateCategory(UpdateCategoryRequest request) {
+        LambdaUpdateWrapper<CategoryDAO> categoryDAOLambdaQueryWrapper = new LambdaUpdateWrapper<>();
+        categoryDAOLambdaQueryWrapper.set(CategoryDAO::getSortBy, request.getSortBy());
+        categoryDAOLambdaQueryWrapper.eq(CategoryDAO::getId, request.getCategoryId());
+        categoryMapper.update(categoryDAOLambdaQueryWrapper);
         QueryWrapper<CategoryDetailDAO> categoryDetailDAOQueryWrapper = new QueryWrapper<>();
         categoryDetailDAOQueryWrapper.eq("category_id", request.getCategoryId());
         categoryDetailDAOQueryWrapper.eq("date", Date.valueOf(DateTimeUtil.getLocalDate(request.getDate())));
@@ -137,6 +145,16 @@ public class CategoryMPServiceImpl extends ServiceImpl<CategoryMapper, CategoryD
             updateWrapper.set("inventory", Double.parseDouble(request.getInventory()));
             categoryDetailMapper.update(updateWrapper);
         }
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public Boolean updateCategoryStatusById(String id, CategoryStatusEnum categoryStatusEnum) {
+        LambdaUpdateWrapper<CategoryDAO> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(CategoryDAO::getId, id);
+        updateWrapper.set(CategoryDAO::getStatus, categoryStatusEnum.getCode());
+        categoryMapper.update(updateWrapper);
         return true;
     }
 }
