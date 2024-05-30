@@ -55,10 +55,10 @@ public class DistributionServiceImpl implements DistributionService {
 
         DecimalFormat df = new DecimalFormat("0.######");
 
-        List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(ZonedDateTime.now());
+        List<DistributionVO> currentDistributionList = distributionMPService.getCurrentDistributionList(dateTime);
 
         List<List<String>> totalData = new ArrayList<>();
-        List<CategoryVO> categoryList = categoryMPService.getCurrentCategoryList(ZonedDateTime.now());
+        List<CategoryVO> categoryList = categoryMPService.getCurrentCategoryList(dateTime);
         Map<String, Double> totalCount = getTotalCount(categoryList, currentDistributionList);
         categoryList = categoryList.stream().filter(categoryVO -> totalCount.get(categoryVO.getCode()) != 0).collect(Collectors.toList());
 
@@ -67,7 +67,7 @@ public class DistributionServiceImpl implements DistributionService {
             Map<String, List<DistributionVO>> collect = currentDistributionList.stream().collect(HashMap::new, (map, distributionVO) -> map.computeIfAbsent(distributionVO.getDistributionType(), k -> new ArrayList<>()).add(distributionVO), HashMap::putAll);
             for (Map.Entry<String, List<DistributionVO>> entry : collect.entrySet()) {
 
-                List<CategoryVO> currentCategoryList = categoryMPService.getCurrentCategoryList(ZonedDateTime.now());
+                List<CategoryVO> currentCategoryList = categoryMPService.getCurrentCategoryList(dateTime);
                 Map<String, Double> currentCategorytotalCount = getTotalCount(currentCategoryList, entry.getValue());
                 Map<String, Double> finalTotalCount = currentCategorytotalCount;
                 currentCategoryList = currentCategoryList.stream().filter(categoryVO -> finalTotalCount.get(categoryVO.getCode()) != 0).collect(Collectors.toList());

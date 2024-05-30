@@ -55,7 +55,6 @@ public class CategoryMPServiceImpl extends ServiceImpl<CategoryMapper, CategoryD
         DecimalFormat df = new DecimalFormat("#.##");
         LocalDate localDate = DateTimeUtil.getLocalDate(date);
         QueryWrapper<CategoryDAO> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("status", CategoryStatusEnum.ENABLED.getCode());
         queryWrapper.orderByAsc("sort_by");
         List<CategoryDAO> categoryDAOS = categoryMapper.selectList(queryWrapper);
         QueryWrapper<CategoryDetailDAO> categoryDetailDAOQueryWrapper = new QueryWrapper<>();
@@ -84,10 +83,15 @@ public class CategoryMPServiceImpl extends ServiceImpl<CategoryMapper, CategoryD
                     .filter(detail -> detail.getCategoryId().equals(categoryDAO.getId())).findFirst()
                     .orElse(new CategoryDetailDAO(null, categoryDAO.getId(), 0.0, 0.0, Date.valueOf(DateTimeUtil.getLocalDate(date))));
             Double totalInventory = categoryDetailDAO.getInventory();
+            Double totalCount = 0.0;
             for (DistributionDetailDAO distributionDetailDAO : finalDistributionDetailDAOList) {
                 if (Objects.equals(distributionDetailDAO.getCategoryId(), categoryDAO.getId())) {
                     categoryDetailDAO.setInventory(categoryDetailDAO.getInventory() - distributionDetailDAO.getCount());
+                    totalCount += distributionDetailDAO.getCount();
                 }
+            }
+            if (!Objects.equals(CategoryStatusEnum.ENABLED.getCode(),categoryDAO.getStatus()) && totalCount == 0.0) {
+                return null;
             }
             return CategoryVO.builder()
                     .id(String.valueOf(categoryDAO.getId()))
@@ -98,7 +102,7 @@ public class CategoryMPServiceImpl extends ServiceImpl<CategoryMapper, CategoryD
                     .inventory(df.format(categoryDetailDAO.getInventory()))
                     .totalInventory(df.format(totalInventory))
                     .build();
-        }).toList();
+        }).filter(Objects::nonNull).toList();
     }
 
     @Override

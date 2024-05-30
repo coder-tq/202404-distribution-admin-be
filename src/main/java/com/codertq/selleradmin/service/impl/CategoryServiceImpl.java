@@ -24,11 +24,21 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Boolean createCategory(CreateCategoryRequest request) {
         checkCreateCategoryRequest(request);
-        CategoryDAO categoryDAO = new CategoryDAO();
-        categoryDAO.setName(request.getName());
-        categoryDAO.setCode(request.getCode());
-        categoryDAO.setSortBy(request.getSortBy());
-        return categoryMPService.save(categoryDAO);
+        LambdaQueryWrapper<CategoryDAO> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CategoryDAO::getCode, request.getCode());
+        CategoryDAO categoryDAO = categoryMPService.getOne(queryWrapper);
+        if (categoryDAO == null) {
+            categoryDAO = new CategoryDAO();
+            categoryDAO.setName(request.getName());
+            categoryDAO.setCode(request.getCode());
+            categoryDAO.setSortBy(request.getSortBy());
+            return categoryMPService.save(categoryDAO);
+        } else {
+            categoryDAO.setStatus(CategoryStatusEnum.ENABLED.getCode());
+            categoryDAO.setName(request.getName());
+            categoryDAO.setSortBy(request.getSortBy());
+            return categoryMPService.updateById(categoryDAO);
+        }
     }
 
     @Override
@@ -38,7 +48,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     private void checkCreateCategoryRequest(CreateCategoryRequest request) {
         LambdaQueryWrapper<CategoryDAO> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(CategoryDAO::getCode,request.getCode());
+        queryWrapper.eq(CategoryDAO::getStatus, CategoryStatusEnum.ENABLED);
+        queryWrapper.eq(CategoryDAO::getCode, request.getCode());
         Optional.ofNullable(categoryMPService.getOne(queryWrapper)).ifPresent(categoryDAO -> {
             throw new IllegalArgumentException("类别编码已存在");
         });

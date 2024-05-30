@@ -158,6 +158,9 @@ public class DistributionMPServiceImpl extends ServiceImpl<DistributionMapper, D
      * 构造分销数据VO
      */
     private List<DistributionVO> buildDistributionVOList(List<DistributionDAO> distributionDAOList) {
+        if (distributionDAOList.isEmpty()) {
+            return new ArrayList<>();
+        }
         QueryWrapper<DistributionDetailDAO> queryWrapper = new QueryWrapper<>();
         queryWrapper.in("distribution_info_id", distributionDAOList.stream().map(DistributionDAO::getId).toList());
         List<DistributionDetailDAO> distributionDetailDAOList = distributionDetailService.list(queryWrapper);
